@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CyberCrypt Messenger</title>
-  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -40,7 +39,6 @@
       justify-content: center;
       align-items: center;
       padding: 15px;
-      position: relative;
     }
 
     .app-card { 
@@ -64,7 +62,6 @@
       font-size: 1.15rem;
       font-weight: 700;
       color: #fff;
-      letter-spacing: -0.2px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -78,13 +75,12 @@
       font-weight: 500;
     }
 
-    /* Custom Toast Notification */
     #toast-notif {
       position: fixed;
       top: 20px;
       left: 50%;
       transform: translateX(-50%) translateY(-100px);
-      background: rgba(239, 68, 68, 0.9);
+      background: rgba(239, 68, 68, 0.95);
       color: #fff;
       padding: 10px 20px;
       border-radius: 30px;
@@ -103,7 +99,6 @@
       opacity: 1;
     }
 
-    /* Grid Input ID */
     .id-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -163,11 +158,11 @@
       margin-bottom: 12px;
     }
 
-    .btn-connect:hover {
-      background: var(--accent-hover);
+    .btn-connect:disabled {
+      background: rgba(37, 99, 235, 0.4);
+      cursor: not-allowed;
     }
 
-    /* Area Chat */
     #chat-box { 
       height: 300px; 
       border: 1px solid var(--border-color); 
@@ -180,9 +175,6 @@
       flex-direction: column; 
       gap: 10px;
     }
-
-    #chat-box::-webkit-scrollbar { width: 4px; }
-    #chat-box::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 
     .msg { 
       padding: 8px 12px; 
@@ -209,7 +201,6 @@
 
     .in { 
       background: var(--msg-in); 
-      border: 1px solid rgba(255, 255, 255, 0.05);
       color: #fff;
       align-self: flex-start; 
       border-bottom-left-radius: 2px;
@@ -228,7 +219,6 @@
       margin-top: 6px; 
     }
 
-    /* Input Kirim Pesan */
     .send-box {
       display: flex;
       gap: 6px;
@@ -245,7 +235,6 @@
       background: var(--accent-color);
     }
 
-    /* Grid Tools */
     .tools-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -267,7 +256,6 @@
       margin-top: 4px; 
     }
 
-    /* Panel Kamera */
     #camera-panel {
       display: none;
       background: rgba(0, 0, 0, 0.9);
@@ -292,17 +280,13 @@
       margin-top: 8px;
     }
 
-    a.map-link {
-      color: #60a5fa;
-      text-decoration: underline;
-    }
-
+    a.map-link { color: #60a5fa; text-decoration: underline; }
     input[type="file"] { display: none; }
   </style>
 </head>
 <body>
 
-<div id="toast-notif">Sistem Notifikasi</div>
+<div id="toast-notif">Notifikasi</div>
 
 <div class="app-card">
   <div class="header-section">
@@ -321,36 +305,32 @@
     </div>
   </div>
   
-  <button onclick="connectWS()" class="btn-connect">Hubungkan Chat</button>
+  <button id="btn-conn" class="btn-connect">Hubungkan Chat</button>
 
   <div id="chat-box"></div>
 
-  <!-- PANEL KAMERA VISUAL -->
   <div id="camera-panel">
     <video id="video-feed" autoplay playsinline muted></video>
     <div class="cam-btn-group">
-      <button onclick="switchCamera()">🔄 Putar</button>
-      <button onclick="captureCameraPhoto()">📸 Foto</button>
-      <button id="btn-video-rec" onclick="toggleVideoRecording()" style="color:#ef4444;">🎥 Rekam</button>
+      <button id="btn-switch-cam">🔄 Putar</button>
+      <button id="btn-take-photo">📸 Foto</button>
+      <button id="btn-video-rec" style="color:#ef4444;">🎥 Rekam</button>
     </div>
-    <button onclick="closeCamera()" style="margin-top:6px; color:#ef4444;">✕ Tutup</button>
+    <button id="btn-close-cam" style="margin-top:6px; color:#ef4444;">✕ Tutup</button>
   </div>
 
   <div class="send-box">
     <input type="text" id="message-input" placeholder="🔒 Type encrypted payload...">
-    <button onclick="sendTextMessage()">Kirim</button>
+    <button id="btn-send-text">Kirim</button>
   </div>
   
   <div class="tools-grid">
-    <button onclick="openCamera()">📷 Kamera</button>
-    <button onclick="sendGPSLocation()">📍 Kirim GPS</button>
-    
-    <button onclick="document.getElementById('media-file').click()">📁 Upload File</button>
-    <input type="file" id="media-file" accept="image/*,video/*,audio/*" onchange="sendMediaFile()">
-    
-    <button id="btn-vn" onclick="toggleRecording()">🎙️ Voice Note</button>
-    
-    <button onclick="clearHistory()" class="btn-purge">🗑️ Hapus Pesan</button>
+    <button id="btn-open-cam">📷 Kamera</button>
+    <button id="btn-send-gps">📍 Kirim GPS</button>
+    <button id="btn-upload-file">📁 Upload File</button>
+    <input type="file" id="media-file" accept="image/*,video/*,audio/*">
+    <button id="btn-vn">🎙️ Voice Note</button>
+    <button id="btn-purge-chat" class="btn-purge">🗑️ Hapus Pesan</button>
   </div>
 </div>
 
@@ -370,17 +350,31 @@
     toast.innerText = msg;
     toast.style.background = isError ? "rgba(239, 68, 68, 0.95)" : "rgba(34, 197, 94, 0.95)";
     toast.classList.add("show");
-    setTimeout(() => { toast.classList.remove("show"); }, 3500);
+    setTimeout(() => { toast.classList.remove("show"); }, 4000);
   }
 
-  window.onload = () => {
+  // Bind Event Listeners saat DOM Selesai Dimuat
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("btn-conn").addEventListener("click", connectWS);
+    document.getElementById("btn-send-text").addEventListener("click", sendTextMessage);
+    document.getElementById("btn-open-cam").addEventListener("click", openCamera);
+    document.getElementById("btn-switch-cam").addEventListener("click", switchCamera);
+    document.getElementById("btn-take-photo").addEventListener("click", captureCameraPhoto);
+    document.getElementById("btn-video-rec").addEventListener("click", toggleVideoRecording);
+    document.getElementById("btn-close-cam").addEventListener("click", closeCamera);
+    document.getElementById("btn-send-gps").addEventListener("click", sendGPSLocation);
+    document.getElementById("btn-upload-file").addEventListener("click", () => document.getElementById("media-file").click());
+    document.getElementById("media-file").addEventListener("change", sendMediaFile);
+    document.getElementById("btn-vn").addEventListener("click", toggleRecording);
+    document.getElementById("btn-purge-chat").addEventListener("click", clearHistory);
+
     const savedChat = localStorage.getItem("e2ee_chat_history");
     if (savedChat) {
       document.getElementById("chat-box").innerHTML = savedChat;
       const box = document.getElementById("chat-box");
       box.scrollTop = box.scrollHeight;
     }
-  };
+  });
 
   function saveChatToLocal() {
     const boxHtml = document.getElementById("chat-box").innerHTML;
@@ -395,11 +389,15 @@
   }
 
   async function initKeys() {
-    keyPair = await window.crypto.subtle.generateKey(
-      { name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
-      true, ["encrypt", "decrypt"]
-    );
-    document.getElementById("status").innerText = "Kunci Enkripsi Siap";
+    try {
+      keyPair = await window.crypto.subtle.generateKey(
+        { name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
+        true, ["encrypt", "decrypt"]
+      );
+      document.getElementById("status").innerText = "Kunci Enkripsi Siap";
+    } catch (e) {
+      document.getElementById("status").innerText = "⚠️ Gunakan HTTPS / Browser Terbaru";
+    }
   }
   initKeys();
 
@@ -424,50 +422,72 @@
   async function connectWS() {
     const myId = document.getElementById("my-id").value.trim();
     const targetId = document.getElementById("target-id").value.trim();
+    const btn = document.getElementById("btn-conn");
+
     if(!myId || !targetId) return showToast("Harap isi ID Anda dan ID Tujuan!");
 
-    document.getElementById("status").innerText = "Memulihkan server (Cold Start)...";
-    ws = new WebSocket(RENDER_WS_URL + myId);
+    btn.disabled = true;
+    btn.innerText = "⏳ Membangunkan Server...";
+    document.getElementById("status").innerText = "Menghubungkan ke backend...";
 
-    ws.onopen = async () => {
-      document.getElementById("status").innerText = "Menukarkan kunci rahasia...";
-      const pubKeyStr = await exportPublicKey();
-      ws.send(JSON.stringify({ type: "key_exchange", from: myId, to: targetId, key: pubKeyStr }));
-    };
+    if(ws) ws.close();
 
-    ws.onerror = () => {
-      document.getElementById("status").innerText = "⚠️ Server sedang bangkit, mencoba lagi...";
-      showToast("Gagal terhubung. Memulai ulang koneksi server...");
-      setTimeout(() => connectWS(), 3000); // Retry otomatis dalam 3 detik
-    };
+    try {
+      ws = new WebSocket(RENDER_WS_URL + myId);
 
-    ws.onclose = () => {
-      document.getElementById("status").innerText = "🔴 Koneksi Terputus";
-    };
-
-    ws.onmessage = async (event) => {
-      const data = JSON.parse(event.data);
-
-      if(data.type === "key_exchange") {
-        peerPublicKey = await importPublicKey(data.key);
-        logSystem(`Public key diterima dari ${data.from}`);
+      ws.onopen = async () => {
+        btn.innerText = "🔄 Menukarkan Kunci...";
+        document.getElementById("status").innerText = "Menukarkan kunci rahasia...";
         const pubKeyStr = await exportPublicKey();
-        ws.send(JSON.stringify({ type: "key_ack", from: myId, to: data.from, key: pubKeyStr }));
-      } 
-      else if(data.type === "key_ack") {
-        peerPublicKey = await importPublicKey(data.key);
-        document.getElementById("status").innerText = "🟢 Terhubung & Terenkripsi E2EE";
-        showToast("Koneksi aman terhubung!", false);
-        logSystem("Koneksi aman E2EE berhasil!");
-      }
-      else if(data.type === "chat_text") {
-        const text = await decryptRSA(data.ciphertext);
-        appendMsg(data.from, text, "in");
-      }
-      else if(data.type === "chat_media") {
-        await handleReceivedMedia(data);
-      }
-    };
+        ws.send(JSON.stringify({ type: "key_exchange", from: myId, to: targetId, key: pubKeyStr }));
+      };
+
+      ws.onerror = () => {
+        document.getElementById("status").innerText = "🔴 Gagal Terhubung";
+        showToast("Server sedang bangun (Cold Start). Tunggu 10 detik lalu tekan tombol lagi.");
+        resetBtnState();
+      };
+
+      ws.onclose = () => {
+        document.getElementById("status").innerText = "🔴 Terputus";
+        resetBtnState();
+      };
+
+      ws.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+
+        if(data.type === "key_exchange") {
+          peerPublicKey = await importPublicKey(data.key);
+          logSystem(`Public key diterima dari ${data.from}`);
+          const pubKeyStr = await exportPublicKey();
+          ws.send(JSON.stringify({ type: "key_ack", from: myId, to: data.from, key: pubKeyStr }));
+        } 
+        else if(data.type === "key_ack") {
+          peerPublicKey = await importPublicKey(data.key);
+          document.getElementById("status").innerText = "🟢 Terhubung & Terenkripsi E2EE";
+          btn.innerText = "🟢 Terhubung";
+          btn.disabled = true;
+          showToast("Koneksi aman berhasil!", false);
+          logSystem("Koneksi aman E2EE berhasil!");
+        }
+        else if(data.type === "chat_text") {
+          const text = await decryptRSA(data.ciphertext);
+          appendMsg(data.from, text, "in");
+        }
+        else if(data.type === "chat_media") {
+          await handleReceivedMedia(data);
+        }
+      };
+    } catch (err) {
+      showToast("Kesalahan jaringan WebSocket.");
+      resetBtnState();
+    }
+  }
+
+  function resetBtnState() {
+    const btn = document.getElementById("btn-conn");
+    btn.disabled = false;
+    btn.innerText = "Hubungkan Chat";
   }
 
   async function sendTextMessage() {
@@ -501,7 +521,7 @@
       document.getElementById("video-feed").srcObject = cameraStream;
       document.getElementById("camera-panel").style.display = "block";
     } catch (err) {
-      showToast("Akses kamera ditolak/tidak didukung.");
+      showToast("Akses kamera ditolak/membutuhkan HTTPS.");
     }
   }
 
@@ -558,9 +578,7 @@
   }
 
   function sendGPSLocation() {
-    if (!navigator.geolocation) {
-      return showToast("Fitur GPS tidak didukung browser ini.");
-    }
+    if (!navigator.geolocation) return showToast("Fitur GPS tidak didukung browser ini.");
 
     logSystem("Mendapatkan koordinat lokasi...");
     
@@ -572,28 +590,32 @@
       const gpsMessage = `📍 Lokasi GPS Saya:\nLat: ${lat}\nLon: ${lon}\nAkurasi: ~${accuracy}m\nMaps: https://maps.google.com/?q=${lat},${lon}`;
       
       await transmitEncryptedText(gpsMessage);
-    }, (err) => {
-      showToast("Akses lokasi GPS ditolak.");
+    }, () => {
+      showToast("Akses lokasi GPS ditolak/membutuhkan HTTPS.");
     }, { enableHighAccuracy: true });
   }
 
   async function toggleRecording() {
     const btn = document.getElementById("btn-vn");
     if (!mediaRecorder || mediaRecorder.state === "inactive") {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
 
-      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const arrayBuffer = await audioBlob.arrayBuffer();
-        await processAndSendMedia(arrayBuffer, "audio/webm");
-      };
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const arrayBuffer = await audioBlob.arrayBuffer();
+          await processAndSendMedia(arrayBuffer, "audio/webm");
+        };
 
-      mediaRecorder.start();
-      btn.innerText = "🛑 Stop VN";
-      btn.style.color = "#ef4444";
+        mediaRecorder.start();
+        btn.innerText = "🛑 Stop VN";
+        btn.style.color = "#ef4444";
+      } catch (err) {
+        showToast("Akses mikrofon ditolak/membutuhkan HTTPS.");
+      }
     } else {
       mediaRecorder.stop();
       btn.innerText = "🎙️ Voice Note";
@@ -627,34 +649,3 @@
     const blob = new Blob([encryptedContent], { type: "application/octet-stream" });
     const formData = new FormData();
     formData.append("file", blob);
-    formData.append("upload_preset", UPLOAD_PRESET);
-
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData });
-    const cloudData = await res.json();
-
-    const targetId = document.getElementById("target-id").value.trim();
-    const myId = document.getElementById("my-id").value.trim();
-
-    ws.send(JSON.stringify({
-      type: "chat_media",
-      from: myId,
-      to: targetId,
-      mediaUrl: cloudData.secure_url,
-      mimeType: mimeType,
-      encryptedAesKey: btoa(String.fromCharCode(...new Uint8Array(encryptedAesKey))),
-      iv: btoa(String.fromCharCode(...new Uint8Array(iv)))
-    }));
-
-    const localUrl = URL.createObjectURL(new Blob([arrayBuffer], { type: mimeType }));
-    renderMediaElement("Saya", localUrl, mimeType, "out");
-  }
-
-  async function handleReceivedMedia(data) {
-    logSystem("Mendeskripsi media masuk...");
-
-    const encryptedAesKeyBin = Uint8Array.from(atob(data.encryptedAesKey), c => c.charCodeAt(0));
-    const rawAesKey = await window.crypto.subtle.decrypt({ name: "RSA-OAEP" }, keyPair.privateKey, encryptedAesKeyBin);
-    const aesKey = await window.crypto.subtle.importKey("raw", rawAesKey, "AES-GCM", true, ["decrypt"]);
-
-    const response = await fetch(data.mediaUrl);
-    const encryptedBuffer = await response.arrayBu
