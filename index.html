@@ -5,105 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberCrypt - E2EE Chat</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 12px; }
-        .title { font-size: 1.2rem; font-weight: bold; color: #38bdf8; }
-        .status { font-size: 0.85rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; background-color: #334155; }
-        .status.online { color: #4ade80; }
-        .status.offline { color: #f87171; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background-color: #0b1329; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .container { width: 100%; max-width: 440px; }
+        .card { background-color: #172036; border: 1px solid #23304d; border-radius: 16px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .brand { display: flex; align-items: center; gap: 8px; font-size: 1.3rem; font-weight: 700; color: #38bdf8; }
+        .status-badge { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .status-badge.offline { background-color: #ef4444; color: white; }
+        .status-badge.online { background-color: #10b981; color: white; }
         .form-group { margin-bottom: 16px; }
-        label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background-color: #0f172a; color: #fff; font-size: 0.9rem; }
-        input:focus { outline: none; border-color: #38bdf8; }
-        button { width: 100%; padding: 12px; border-radius: 6px; border: none; background-color: #0284c7; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { background-color: #0369a1; }
-        .chat-box { height: 250px; border: 1px solid #334155; border-radius: 6px; background-color: #0f172a; padding: 12px; overflow-y: auto; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .message { padding: 8px 12px; border-radius: 6px; max-width: 80%; font-size: 0.85rem; word-break: break-word; }
-        .message.sent { background-color: #0369a1; align-self: flex-end; }
-        .message.received { background-color: #334155; align-self: flex-start; }
+        label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px; font-weight: 500; }
+        input { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #2d3d5f; background-color: #0d1527; color: #fff; font-size: 0.95rem; outline: none; transition: 0.2s; }
+        input:focus { border-color: #38bdf8; }
+        .btn-connect { width: 100%; padding: 14px; border-radius: 8px; border: none; background-color: #2563eb; color: white; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 8px; }
+        .btn-connect:hover { background-color: #1d4ed8; }
+        .chat-box { height: 280px; border: 1px solid #2d3d5f; border-radius: 8px; background-color: #0d1527; padding: 12px; overflow-y: auto; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
+        .msg { padding: 10px 14px; border-radius: 10px; font-size: 0.9rem; max-width: 80%; word-break: break-word; }
+        .sent { background-color: #2563eb; align-self: flex-end; }
+        .received { background-color: #23304d; align-self: flex-start; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="header">
-        <div class="title">🔒 CyberCrypt</div>
-        <div id="statusText" class="status offline">🔴 Terputus</div>
-    </div>
-
-    <div id="setupArea">
-        <div class="form-group">
-            <label>ID / Domain Backend Railway</label>
-            <input type="text" id="railwayUrl" placeholder="chat-backend-production-xxxx.up.railway.app">
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <div class="brand">🔒 CyberCrypt</div>
+            <div id="statusBadge" class="status-badge offline">
+                <span id="statusIcon">🔴</span> <span id="statusText">Terputus</span>
+            </div>
         </div>
-        <div class="form-group">
-            <label>ID Room Chat</label>
-            <input type="text" id="roomId" placeholder="Contoh: room123">
-        </div>
-        <button onclick="connectWS()">Hubungkan Chat</button>
-    </div>
 
-    <div id="chatArea" style="display: none;">
-        <div class="chat-box" id="chatBox"></div>
-        <div class="form-group" style="display: flex; gap: 8px;">
-            <input type="text" id="msgInput" placeholder="Tulis pesan..." onkeydown="if(event.key==='Enter') sendMsg()">
-            <button onclick="sendMsg()" style="width: auto; padding: 0 16px;">Kirim</button>
+        <!-- Form Input ID (Tampilan Asli) -->
+        <div id="setupArea">
+            <div class="form-group">
+                <label>ID Anda</label>
+                <input type="text" id="myId" placeholder="Masukkan ID Anda (misal: user1)">
+            </div>
+            <div class="form-group">
+                <label>ID Tujuan</label>
+                <input type="text" id="targetId" placeholder="Masukkan ID Tujuan (misal: user2)">
+            </div>
+            <button class="btn-connect" onclick="connectChat()">Hubungkan Chat</button>
+        </div>
+
+        <!-- Area Pesan Chat -->
+        <div id="chatArea" style="display: none;">
+            <div class="chat-box" id="chatBox"></div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="msgInput" placeholder="Tulis pesan..." onkeydown="if(event.key==='Enter') sendMsg()">
+                <button class="btn-connect" style="width: auto; margin-top: 0; padding: 0 18px;" onclick="sendMsg()">Kirim</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    // ====================================================================
+    // ⚠️ SILAKAN MASUKKAN DOMAIN RAILWAY ASLI ANDA DI BAWAH INI:
+    const RAILWAY_DOMAIN = "PASTE_DOMAIN_RAILWAY_ANDA_DI_SINI";
+    // ====================================================================
+
     let ws = null;
 
-    function connectWS() {
-        let domain = document.getElementById("railwayUrl").value.trim();
-        const roomId = document.getElementById("roomId").value.trim();
+    function connectChat() {
+        const myId = document.getElementById("myId").value.trim();
+        const targetId = document.getElementById("targetId").value.trim();
 
-        if (!domain || !roomId) {
-            alert("Harap isi URL Railway dan Room ID!");
+        if (!myId || !targetId) {
+            alert("Harap isi ID Anda dan ID Tujuan!");
             return;
         }
 
-        // Bersihkan awalan http:// atau https:// jika terikut ter-copy
-        domain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        if (RAILWAY_DOMAIN.includes("PASTE_DOMAIN")) {
+            alert("Harap isi domain Railway Anda di file index.html baris 69!");
+            return;
+        }
 
-        // Format WebSocket Secure (wss://)
-        const wsUrl = `wss://${domain}/ws/${roomId}`;
+        // Urutkan ID agar kedua pengguna masuk ke Room ID yang sama secara konsisten
+        const roomId = [myId, targetId].sort().join("_");
+        const cleanDomain = RAILWAY_DOMAIN.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        const wsUrl = `wss://${cleanDomain}/ws/${roomId}`;
 
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-            document.getElementById("statusText").innerHTML = "🟢 Terhubung";
-            document.getElementById("statusText").className = "status online";
+            document.getElementById("statusBadge").className = "status-badge online";
+            document.getElementById("statusIcon").innerText = "🟢";
+            document.getElementById("statusText").innerText = "Terhubung";
+            
             document.getElementById("setupArea").style.display = "none";
             document.getElementById("chatArea").style.display = "block";
         };
 
-        ws.onmessage = (event) => {
-            addMessage(event.data, 'received');
-        };
+        ws.onmessage = (event) => addMessage(event.data, 'received');
 
         ws.onclose = () => {
-            document.getElementById("statusText").innerHTML = "🔴 Terputus";
-            document.getElementById("statusText").className = "status offline";
+            document.getElementById("statusBadge").className = "status-badge offline";
+            document.getElementById("statusIcon").innerText = "🔴";
+            document.getElementById("statusText").innerText = "Terputus";
+            
             document.getElementById("setupArea").style.display = "block";
             document.getElementById("chatArea").style.display = "none";
         };
 
         ws.onerror = (err) => {
-            alert("Gagal terhubung ke server Railway. Periksa kembali URL Domain Anda.");
+            alert("Koneksi gagal! Periksa kembali Domain Railway Anda.");
             console.error(err);
         };
     }
 
     function sendMsg() {
         const input = document.getElementById("msgInput");
-        const msg = input.value.trim();
-        if (msg && ws) {
-            ws.send(msg);
-            addMessage(msg, 'sent');
+        const text = input.value.trim();
+        if (text && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(text);
+            addMessage(text, 'sent');
             input.value = "";
         }
     }
@@ -111,7 +129,7 @@
     function addMessage(text, type) {
         const box = document.getElementById("chatBox");
         const div = document.createElement("div");
-        div.className = `message ${type}`;
+        div.className = `msg ${type}`;
         div.textContent = text;
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
