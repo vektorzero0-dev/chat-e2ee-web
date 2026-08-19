@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WA E2EE Web</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0b141a; color: #e9edef; margin: 0; padding: 15px; }
+    .card { max-width: 450px; margin: 0 auto; background: #111b21; padding: 15px; border-radius: 12px; border: 1px solid #222e35; }
+    input, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: 1px solid #2a3942; background: #202c33; color: white; box-sizing: border-box; }
+    button { background: #00a884; font-weight: bold; cursor: pointer; border: none; }
+    #chat-box { height: 300px; border: 1px solid #222e35; overflow-y: auto; padding: 10px; margin: 10px 0; border-radius: 8px; background: #0b141a; display: flex; flex-direction: column; }
+    .msg { margin: 8px 0; padding: 8px 12px; border-radius: 8px; max-width: 80%; word-break: break-word; font-size: 0.9em; }
+    .system { color: #8696a0; text-align: center; font-style: italic; font-size: 0.8em; margin: 5px 0; }
+    .in { background: #202c33; align-self: flex-start; }
+    .out { background: #005c4b; margin-left: auto; text-align: right; }
+    .media-preview { max-width: 100%; border-radius: 8px; margin-top: 5px; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h3 style="margin-top:0; color:#00a884;">🔒 WhatsApp E2EE Web</h3>
+  <div id="status" class="system">Status: Menyiapkan Kunci Enkripsi...</div>
+  
+  <input type="text" id="my-id" placeholder="ID Anda (misal: userA)">
+  <input type="text" id="target-id" placeholder="ID Lawan (misal: userB)">
+  <button onclick="connectWS()">Hubungkan Chat</button>
+
+  <div id="chat-box"></div>
+
+  <input type="text" id="message-input" placeholder="Ketik pesan rahasia...">
+  <button onclick="sendTextMessage()">Kirim Pesan Teks</button>
+  
+  <hr style="border-color:#222e35; margin:10px 0;">
+
+  <!-- Fitur Media -->
+  <label style="font-size: 0.8em; color:#8696a0;">Kirim Foto/Video:</label>
+  <input type="file" id="media-file" accept="image/*,video/*">
+  <button onclick="sendMediaFile()" style="background:#028284;">Kirim Media (E2EE)</button>
+  
+  <button id="btn-vn" onclick="toggleRecording()" style="background:#d97706; margin-top:8px;">🎙️ Rekam & Kirim VN</button>
+</div>
+
+<script>
+  // KONEKSI & CONFIGURASI OTOMATIS
+  const RENDER_WS_URL = "wss://e2ee-backend.onrender.com/ws/"; // Ganti URL ini jika nama service Render Anda berbeda
+  const CLOUD_NAME = "ktbbdjrb"; 
+  const UPLOAD_PRESET = "chat_preset"; 
+
+  let ws, keyPair, peerPublicKey;
+  let mediaRecorder, audioChunks = [];
+
+  // 1. Setup RSA Key Pair
+  async function initKeys() {
+    keyPair = await window.crypto.subtle.generateKey(
+      { name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
+      true, ["encrypt", "decrypt"]
+    );
+    document.getElementById("status").innerText = "Kunci E2EE Siap!";
+  }
+  initKeys();
+
+  async function exportPublicKey() {
+    const exported = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+    return btoa(String.fromCharCode(...new Uint8Array(exported)));
+  }
+
+  async function importPublicKey(pemBase64) {
+    const binaryDer = Uint8Array.from(atob(pemBase64), c => c.charCodeAt(0));
+    return await window.crypto.subtle.importKey(
+      "spki", binaryDer, { name: "RSA-OAEP", hash: "SHA-256" }, true, ["encrypt"]
+    );
+  }
+
+  async function generateAesKey() {
+    return await window.crypto.subtle.generateKey(
+      { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]
+    );
+  }
+
+  // 2. Koneksi WebSocket
+  async function connectWS() {
+    const myId = document.getElementById("my-id").value;
+    const targetId = document.getElementById("target-id").value;
+    if(!myId || !targetId) return alert("Isi ID Anda dan ID Lawan!");
+
+    ws = new WebSocket(RENDER_WS_URL + myId);
+
+    ws.onopen = async () => {
+      document.getElementById("status").innerText = "Terhubung! Menukar Kunci...";
+      const pubKeyStr = await exportPublicKey();
+      ws.send(JSON.stringify({ type: "key_exchange", from: myId, to: targetId, key: pubKeyStr }));
+    };
+
+    ws.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+
+      if(data.type === "key_exchange") {
+        peerPublicKey = await importPublicKey(data.key);
+        logSystem(`Kunci dari ${data.from} diterima.`);
+        const pubKeyStr = await exportPublicKey();
+        ws.send(JSON.stringify({ type: "key_ack", from: myId, to: data.from, key: pubKeyStr }));
+      } 
+      else if(data.type === "key_ack") {
+        peerPublicKey = await importPublicKey(data.key);
+        logSystem("Koneksi E2EE Aman! Selamat Chatting.");
+      }
+      else if(data.type === "chat_text") {
+        const text = await decryptRSA(data.ciphertext);
+        appendMsg(data.from, text, "in");
+      }
+      else if(data.type === "chat_media") {
+        await handleReceivedMedia(data);
+      }
+    };
+  }
+
+  // 3. Kirim Pesan Teks
+  async function sendTextMessage() {
+    const text = document.getElementById("message-input").value;
+    const targetId = document.getElementById("target-id").value;
+    const myId = document.getElementById("my-id").value;
+
+    if(!peerPublicKey) return alert("Kunci lawan belum terhubung!");
+
+    const enc = new TextEncoder();
+    const encrypted = await window.crypto.subtle.encrypt({ name: "RSA-OAEP" }, peerPublicKey, enc.encode(text));
+    const ciphertextBase64 = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+
+    ws.send(JSON.stringify({ type: "chat_text", from: myId, to: targetId, ciphertext: ciphertextBase64 }));
+    appendMsg("Anda", text, "out");
+    document.getElementById("message-input").value = "";
+  }
+
+  // 4. Kirim & Enkripsi Media (Foto/Video)
+  async function sendMediaFile() {
+    const fileInput = document.getElementById("media-file");
+    if(fileInput.files.length === 0) return alert("Pilih file dulu!");
+    
+    const file = fileInput.files[0];
+    const arrayBuffer = await file.arrayBuffer();
+    await processAndSendMedia(arrayBuffer, file.type);
+    fileInput.value = "";
+  }
+
+  // 5. Merekam & Kirim VN
+  async function toggleRecording() {
+    const btn = document.getElementById("btn-vn");
+    if (!mediaRecorder || mediaRecorder.state === "inactive") {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        await processAndSendMedia(arrayBuffer, "audio/webm");
+      };
+
+      mediaRecorder.start();
+      btn.innerText = "🛑 Hentikan & Kirim VN";
+      btn.style.background = "#dc2626";
+    } else {
+      mediaRecorder.stop();
+      btn.innerText = "🎙️ Rekam & Kirim VN";
+      btn.style.background = "#d97706";
+    }
+  }
+
+  // ENKRIPSI AES & UPLOAD CLOUDINARY
+  async function processAndSendMedia(arrayBuffer, mimeType) {
+    logSystem("Mengenkripsi & Mengunggah media...");
+    
+    const aesKey = await generateAesKey();
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+    const encryptedContent = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, aesKey, arrayBuffer);
+    
+    const rawAesKey = await window.crypto.subtle.exportKey("raw", aesKey);
+    const encryptedAesKey = await window.crypto.subtle.encrypt({ name: "RSA-OAEP" }, peerPublicKey, rawAesKey);
+
+    const blob = new Blob([encryptedContent], { type: "application/octet-stream" });
+    const formData = new FormData();
+    formData.append("file", blob);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData });
+    const cloudData = await res.json();
+
+    const targetId = document.getElementById("target-id").value;
+    const myId = document.getElementById("my-id").value;
+
+    ws.send(JSON.stringify({
+      type: "chat_media",
+      from: myId,
+      to: targetId,
+      mediaUrl: cloudData.secure_url,
+      mimeType: mimeType,
+      encryptedAesKey: btoa(String.fromCharCode(...new Uint8Array(encryptedAesKey))),
+      iv: btoa(String.fromCharCode(...new Uint8Array(iv)))
+    }));
+
+    const localUrl = URL.createObjectURL(new Blob([arrayBuffer], { type: mimeType }));
+    renderMediaElement("Anda", localUrl, mimeType, "out");
+  }
+
+  // MENDEKRIPSI MEDIA
+  async function handleReceivedMedia(data) {
+    logSystem("Menerima media, mendekripsi...");
+
+    const encryptedAesKeyBin = Uint8Array.from(atob(data.encryptedAesKey), c => c.charCodeAt(0));
+    const rawAesKey = await window.crypto.subtle.decrypt({ name: "RSA-OAEP" }, keyPair.privateKey, encryptedAesKeyBin);
+    const aesKey = await window.crypto.subtle.importKey("raw", rawAesKey, "AES-GCM", true, ["decrypt"]);
+
+    const response = await fetch(data.mediaUrl);
+    const encryptedBuffer = await response.arrayBuffer();
+
+    const ivBin = Uint8Array.from(atob(data.iv), c => c.charCodeAt(0));
+    const decryptedBuffer = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBin }, aesKey, encryptedBuffer);
+
+    const localUrl = URL.createObjectURL(new Blob([decryptedBuffer], { type: data.mimeType }));
+    renderMediaElement(data.from, localUrl, data.mimeType, "in");
+  }
+
+  async function decryptRSA(ciphertextBase64) {
+    const binary = Uint8Array.from(atob(ciphertextBase64), c => c.charCodeAt(0));
+    const decrypted = await window.crypto.subtle.decrypt({ name: "RSA-OAEP" }, keyPair.privateKey, binary);
+    return new TextDecoder().decode(decrypted);
+  }
+
+  function appendMsg(sender, text, type) {
+    const box = document.getElementById("chat-box");
+    box.innerHTML += `<div class="msg ${type}"><b>${sender}:</b> ${text}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function renderMediaElement(sender, blobUrl, mimeType, type) {
+    const box = document.getElementById("chat-box");
+    let mediaHtml = "";
+
+    if (mimeType.startsWith("image/")) {
+      mediaHtml = `<img src="${blobUrl}" class="media-preview">`;
+    } else if (mimeType.startsWith("video/")) {
+      mediaHtml = `<video src="${blobUrl}" controls class="media-preview"></video>`;
+    } else if (mimeType.startsWith("audio/")) {
+      mediaHtml = `<audio src="${blobUrl}" controls style="width:100%; margin-top:5px;"></audio>`;
+    }
+
+    box.innerHTML += `<div class="msg ${type}"><b>${sender}:</b><br>${mediaHtml}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function logSystem(text) {
+    const box = document.getElementById("chat-box");
+    box.innerHTML += `<div class="system">⚙️ ${text}</div>`;
+  }
+</script>
+
+</body>
+</html>
