@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CyberCrypt Messenger</title>
+  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,6 +40,7 @@
       justify-content: center;
       align-items: center;
       padding: 15px;
+      position: relative;
     }
 
     .app-card { 
@@ -62,6 +64,7 @@
       font-size: 1.15rem;
       font-weight: 700;
       color: #fff;
+      letter-spacing: -0.2px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -75,12 +78,13 @@
       font-weight: 500;
     }
 
+    /* Custom Toast Notification */
     #toast-notif {
       position: fixed;
       top: 20px;
       left: 50%;
       transform: translateX(-50%) translateY(-100px);
-      background: rgba(239, 68, 68, 0.95);
+      background: rgba(239, 68, 68, 0.9);
       color: #fff;
       padding: 10px 20px;
       border-radius: 30px;
@@ -99,6 +103,7 @@
       opacity: 1;
     }
 
+    /* Grid Input ID */
     .id-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -158,11 +163,11 @@
       margin-bottom: 12px;
     }
 
-    .btn-connect:disabled {
-      background: rgba(37, 99, 235, 0.4);
-      cursor: not-allowed;
+    .btn-connect:hover {
+      background: var(--accent-hover);
     }
 
+    /* Area Chat */
     #chat-box { 
       height: 300px; 
       border: 1px solid var(--border-color); 
@@ -175,6 +180,9 @@
       flex-direction: column; 
       gap: 10px;
     }
+
+    #chat-box::-webkit-scrollbar { width: 4px; }
+    #chat-box::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 
     .msg { 
       padding: 8px 12px; 
@@ -201,6 +209,7 @@
 
     .in { 
       background: var(--msg-in); 
+      border: 1px solid rgba(255, 255, 255, 0.05);
       color: #fff;
       align-self: flex-start; 
       border-bottom-left-radius: 2px;
@@ -219,6 +228,7 @@
       margin-top: 6px; 
     }
 
+    /* Input Kirim Pesan */
     .send-box {
       display: flex;
       gap: 6px;
@@ -235,6 +245,7 @@
       background: var(--accent-color);
     }
 
+    /* Grid Tools */
     .tools-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -256,6 +267,7 @@
       margin-top: 4px; 
     }
 
+    /* Panel Kamera */
     #camera-panel {
       display: none;
       background: rgba(0, 0, 0, 0.9);
@@ -280,13 +292,17 @@
       margin-top: 8px;
     }
 
-    a.map-link { color: #60a5fa; text-decoration: underline; }
+    a.map-link {
+      color: #60a5fa;
+      text-decoration: underline;
+    }
+
     input[type="file"] { display: none; }
   </style>
 </head>
 <body>
 
-<div id="toast-notif">Notifikasi</div>
+<div id="toast-notif">Sistem Notifikasi</div>
 
 <div class="app-card">
   <div class="header-section">
@@ -305,10 +321,11 @@
     </div>
   </div>
   
-  <button id="btn-conn" onclick="connectWS()" class="btn-connect">Hubungkan Chat</button>
+  <button onclick="connectWS()" class="btn-connect">Hubungkan Chat</button>
 
   <div id="chat-box"></div>
 
+  <!-- PANEL KAMERA VISUAL -->
   <div id="camera-panel">
     <video id="video-feed" autoplay playsinline muted></video>
     <div class="cam-btn-group">
@@ -327,9 +344,12 @@
   <div class="tools-grid">
     <button onclick="openCamera()">📷 Kamera</button>
     <button onclick="sendGPSLocation()">📍 Kirim GPS</button>
+    
     <button onclick="document.getElementById('media-file').click()">📁 Upload File</button>
     <input type="file" id="media-file" accept="image/*,video/*,audio/*" onchange="sendMediaFile()">
+    
     <button id="btn-vn" onclick="toggleRecording()">🎙️ Voice Note</button>
+    
     <button onclick="clearHistory()" class="btn-purge">🗑️ Hapus Pesan</button>
   </div>
 </div>
@@ -344,14 +364,13 @@
   let videoRecorder, videoChunks = [];
   let cameraStream = null;
   let currentFacingMode = "environment";
-  let connectTimeout = null;
 
   function showToast(msg, isError = true) {
     const toast = document.getElementById("toast-notif");
     toast.innerText = msg;
     toast.style.background = isError ? "rgba(239, 68, 68, 0.95)" : "rgba(34, 197, 94, 0.95)";
     toast.classList.add("show");
-    setTimeout(() => { toast.classList.remove("show"); }, 4000);
+    setTimeout(() => { toast.classList.remove("show"); }, 3500);
   }
 
   window.onload = () => {
@@ -376,15 +395,11 @@
   }
 
   async function initKeys() {
-    try {
-      keyPair = await window.crypto.subtle.generateKey(
-        { name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
-        true, ["encrypt", "decrypt"]
-      );
-      document.getElementById("status").innerText = "Kunci Enkripsi Siap";
-    } catch (e) {
-      document.getElementById("status").innerText = "⚠️ Browser Tidak Mendukung Crypto API";
-    }
+    keyPair = await window.crypto.subtle.generateKey(
+      { name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
+      true, ["encrypt", "decrypt"]
+    );
+    document.getElementById("status").innerText = "Kunci Enkripsi Siap";
   }
   initKeys();
 
@@ -409,46 +424,25 @@
   async function connectWS() {
     const myId = document.getElementById("my-id").value.trim();
     const targetId = document.getElementById("target-id").value.trim();
-    const btn = document.getElementById("btn-conn");
-
     if(!myId || !targetId) return showToast("Harap isi ID Anda dan ID Tujuan!");
 
-    // Set UI State Loading
-    btn.disabled = true;
-    btn.innerText = "⏳ Membangunkan Server...";
-    document.getElementById("status").innerText = "Menghubungkan ke backend...";
-
-    if(ws) ws.close();
-
+    document.getElementById("status").innerText = "Memulihkan server (Cold Start)...";
     ws = new WebSocket(RENDER_WS_URL + myId);
 
-    // Timeout jika server Render butuh waktu sangat lama
-    connectTimeout = setTimeout(() => {
-      if(ws.readyState !== WebSocket.OPEN) {
-        document.getElementById("status").innerText = "⚠️ Server lambat bangun. Coba lagi...";
-        showToast("Server sedang booting, silakan tekan tombol sekali lagi.");
-        resetBtnState();
-      }
-    }, 15000);
-
     ws.onopen = async () => {
-      clearTimeout(connectTimeout);
-      btn.innerText = "🔄 Menukarkan Kunci...";
       document.getElementById("status").innerText = "Menukarkan kunci rahasia...";
       const pubKeyStr = await exportPublicKey();
       ws.send(JSON.stringify({ type: "key_exchange", from: myId, to: targetId, key: pubKeyStr }));
     };
 
-    ws.onerror = (err) => {
-      clearTimeout(connectTimeout);
-      document.getElementById("status").innerText = "🔴 Gagal Terhubung";
-      showToast("Server offline atau sedang bangun. Tunggu 10 detik lalu coba lagi.");
-      resetBtnState();
+    ws.onerror = () => {
+      document.getElementById("status").innerText = "⚠️ Server sedang bangkit, mencoba lagi...";
+      showToast("Gagal terhubung. Memulai ulang koneksi server...");
+      setTimeout(() => connectWS(), 3000); // Retry otomatis dalam 3 detik
     };
 
     ws.onclose = () => {
-      document.getElementById("status").innerText = "🔴 Terputus";
-      resetBtnState();
+      document.getElementById("status").innerText = "🔴 Koneksi Terputus";
     };
 
     ws.onmessage = async (event) => {
@@ -463,9 +457,7 @@
       else if(data.type === "key_ack") {
         peerPublicKey = await importPublicKey(data.key);
         document.getElementById("status").innerText = "🟢 Terhubung & Terenkripsi E2EE";
-        btn.innerText = "🟢 Terhubung";
-        btn.disabled = true;
-        showToast("Koneksi aman berhasil!", false);
+        showToast("Koneksi aman terhubung!", false);
         logSystem("Koneksi aman E2EE berhasil!");
       }
       else if(data.type === "chat_text") {
@@ -476,12 +468,6 @@
         await handleReceivedMedia(data);
       }
     };
-  }
-
-  function resetBtnState() {
-    const btn = document.getElementById("btn-conn");
-    btn.disabled = false;
-    btn.innerText = "Hubungkan Chat";
   }
 
   async function sendTextMessage() {
@@ -495,7 +481,7 @@
     const targetId = document.getElementById("target-id").value.trim();
     const myId = document.getElementById("my-id").value.trim();
 
-    if(!peerPublicKey) return showToast("Belum terhubung! Klik 'Hubungkan Chat' terlebih dahulu.");
+    if(!peerPublicKey) return showToast("Belum terhubung! Klik 'Hubungkan Chat' dulu.");
 
     const enc = new TextEncoder();
     const encrypted = await window.crypto.subtle.encrypt({ name: "RSA-OAEP" }, peerPublicKey, enc.encode(text));
@@ -572,7 +558,9 @@
   }
 
   function sendGPSLocation() {
-    if (!navigator.geolocation) return showToast("Fitur GPS tidak didukung browser ini.");
+    if (!navigator.geolocation) {
+      return showToast("Fitur GPS tidak didukung browser ini.");
+    }
 
     logSystem("Mendapatkan koordinat lokasi...");
     
@@ -658,4 +646,15 @@
     }));
 
     const localUrl = URL.createObjectURL(new Blob([arrayBuffer], { type: mimeType }));
-    renderMediaElement("Saya", localUrl,
+    renderMediaElement("Saya", localUrl, mimeType, "out");
+  }
+
+  async function handleReceivedMedia(data) {
+    logSystem("Mendeskripsi media masuk...");
+
+    const encryptedAesKeyBin = Uint8Array.from(atob(data.encryptedAesKey), c => c.charCodeAt(0));
+    const rawAesKey = await window.crypto.subtle.decrypt({ name: "RSA-OAEP" }, keyPair.privateKey, encryptedAesKeyBin);
+    const aesKey = await window.crypto.subtle.importKey("raw", rawAesKey, "AES-GCM", true, ["decrypt"]);
+
+    const response = await fetch(data.mediaUrl);
+    const encryptedBuffer = await response.arrayBu
