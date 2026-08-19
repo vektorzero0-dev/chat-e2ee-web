@@ -3,219 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberCrypt - E2EE Terminal Chat</title>
+    <title>CyberCrypt - Quantum Encrypted Terminal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --neon-green: #00ffa3;
+            --neon-cyan: #00f0ff;
+            --bg-dark: #030712;
+            --card-bg: rgba(15, 23, 42, 0.75);
+            --border-color: rgba(0, 255, 163, 0.25);
+            --text-main: #f1f5f9;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         body {
-            background-color: #050811;
-            background-image: radial-gradient(circle at 50% 50%, #0d1527 0%, #050811 100%);
-            color: #c9d1d9;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(0, 255, 163, 0.08) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 10px;
+            padding: 12px;
+            overflow: hidden;
         }
+
+        /* Overlay Scanline Futuristik */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
         .app-container {
             width: 100%;
-            max-width: 460px;
-            background: #0d1117;
-            border-radius: 14px;
+            max-width: 480px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
             height: 94vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            border: 1px solid #30363d;
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.12), inset 0 0 2px rgba(0, 255, 136, 0.2);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 40px rgba(0, 255, 163, 0.15), inset 0 0 15px rgba(0, 240, 255, 0.05);
+            position: relative;
+            z-index: 10;
         }
+
+        /* Header Terminal */
         .header {
-            padding: 14px 18px;
-            background: #161b22;
+            padding: 16px 20px;
+            background: rgba(30, 41, 59, 0.6);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #30363d;
-            font-family: 'Fira Code', monospace;
+            border-bottom: 1px solid var(--border-color);
+            font-family: 'JetBrains Mono', monospace;
         }
+
         .brand {
-            color: #00ff88;
-            font-size: 1.05rem;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-            text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+            color: var(--neon-cyan);
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
+
         .status-tag {
-            font-size: 0.75rem;
-            color: #00ff88;
-            background: rgba(0, 255, 136, 0.1);
-            padding: 4px 10px;
+            font-size: 0.72rem;
+            color: var(--neon-green);
+            background: rgba(0, 255, 163, 0.1);
+            padding: 5px 12px;
             border-radius: 20px;
-            border: 1px solid rgba(0, 255, 136, 0.3);
+            border: 1px solid rgba(0, 255, 163, 0.4);
             font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 10px rgba(0, 255, 163, 0.2);
         }
+
+        /* Panel Setup/Login ID */
         .setup-panel {
-            padding: 20px;
-            background: #161b22;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.8);
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            font-family: 'Fira Code', monospace;
+            gap: 16px;
+            font-family: 'JetBrains Mono', monospace;
         }
-        .setup-panel label {
+
+        .input-group label {
             font-size: 0.75rem;
-            color: #8b949e;
-            margin-bottom: -6px;
+            color: var(--neon-cyan);
+            display: block;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
         }
+
         .setup-panel input {
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #30363d;
-            background: #0d1117;
-            color: #00ff88;
-            font-family: 'Fira Code', monospace;
-            font-size: 0.9rem;
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(3, 7, 18, 0.8);
+            color: var(--neon-green);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
             outline: none;
-            transition: 0.2s;
+            transition: all 0.3s ease;
         }
+
         .setup-panel input:focus {
-            border-color: #00ff88;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(0, 255, 163, 0.3);
         }
+
         .btn-cyber {
-            padding: 12px;
-            background: linear-gradient(135deg, #00b359, #00ff88);
-            color: #050811;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+            color: #030712;
             border: none;
-            border-radius: 8px;
-            font-family: 'Fira Code', monospace;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
             cursor: pointer;
-            transition: 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 6px;
+            transition: all 0.3s ease;
+            letter-spacing: 1.5px;
+            margin-top: 8px;
+            text-shadow: 0 0 2px rgba(255,255,255,0.5);
         }
+
         .btn-cyber:hover {
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
-            transform: translateY(-1px);
+            box-shadow: 0 0 25px rgba(0, 255, 163, 0.6);
+            transform: translateY(-2px);
         }
+
+        /* Area Obrolan Chat */
         .chat-box {
             flex: 1;
-            padding: 16px;
+            padding: 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            background: #090d13;
+            gap: 14px;
+            background: rgba(3, 7, 18, 0.4);
         }
-        .chat-box::-webkit-scrollbar { width: 6px; }
-        .chat-box::-webkit-scrollbar-track { background: #090d13; }
-        .chat-box::-webkit-scrollbar-thumb { background: #21262d; border-radius: 3px; }
-        .chat-box::-webkit-scrollbar-thumb:hover { background: #00ff88; }
+
+        .chat-box::-webkit-scrollbar { width: 4px; }
+        .chat-box::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
 
         .msg {
-            padding: 10px 14px;
-            border-radius: 12px;
-            max-width: 82%;
-            font-size: 0.92rem;
-            line-height: 1.45;
+            padding: 12px 16px;
+            border-radius: 16px;
+            max-width: 80%;
+            font-size: 0.93rem;
+            line-height: 1.5;
             word-break: break-word;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            position: relative;
+            animation: fadeIn 0.25s ease-in-out;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .sent {
-            background: #0d281e;
-            border: 1px solid #00ff88;
-            color: #e6fffa;
+            background: linear-gradient(135deg, rgba(0, 255, 163, 0.15), rgba(0, 240, 255, 0.1));
+            border: 1px solid var(--border-color);
+            color: #ffffff;
             align-self: flex-end;
             border-bottom-right-radius: 2px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
+
         .received {
-            background: #161b22;
-            border: 1px solid #30363d;
-            color: #f0f6fc;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
             align-self: flex-start;
             border-bottom-left-radius: 2px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
+
         .msg img, .msg video {
             max-width: 100%;
-            border-radius: 8px;
-            margin-top: 6px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-top: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
+
+        /* Toolbar Input Chat & Media */
         .input-bar {
-            padding: 12px;
-            background: #161b22;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.9);
             display: flex;
-            gap: 8px;
+            gap: 10px;
             align-items: center;
-            border-top: 1px solid #30363d;
+            border-top: 1px solid var(--border-color);
         }
+
         .input-bar input[type="text"] {
             flex: 1;
-            padding: 11px 16px;
-            border-radius: 24px;
-            border: 1px solid #30363d;
-            background: #0d1117;
-            color: #f0f6fc;
+            padding: 12px 18px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(3, 7, 18, 0.9);
+            color: #f8fafc;
             font-size: 0.92rem;
             outline: none;
-            transition: 0.2s;
+            transition: all 0.3s;
         }
+
         .input-bar input[type="text"]:focus {
-            border-color: #00ff88;
-            box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
         }
+
         .btn-action {
-            background: #21262d;
-            border: 1px solid #30363d;
-            color: #00ff88;
-            width: 38px;
-            height: 38px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--neon-cyan);
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.1rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: 0.2s;
+            transition: all 0.3s ease;
         }
+
         .btn-action:hover {
-            background: #30363d;
-            border-color: #00ff88;
-            box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+            background: rgba(0, 240, 255, 0.15);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+            transform: scale(1.05);
         }
+
         .btn-send {
-            background: #00ff88;
-            color: #050811;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+            color: #030712;
             border: none;
-            padding: 0 16px;
-            height: 38px;
-            border-radius: 20px;
+            padding: 0 18px;
+            height: 42px;
+            border-radius: 22px;
             cursor: pointer;
             font-weight: 700;
-            font-family: 'Fira Code', monospace;
-            transition: 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.3s ease;
         }
+
         .btn-send:hover {
-            box-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+            box-shadow: 0 0 15px rgba(0, 255, 163, 0.5);
+            transform: scale(1.03);
         }
+
         .recording {
-            background: #da3633 !important;
-            color: #fff !important;
-            border-color: #f85149 !important;
-            animation: pulse 1s infinite;
+            background: rgba(239, 68, 68, 0.2) !important;
+            color: #ef4444 !important;
+            border-color: #ef4444 !important;
+            animation: pulse-red 1s infinite;
         }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(248, 81, 73, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0); }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
     </style>
 </head>
@@ -224,23 +297,25 @@
 <div class="app-container">
     <div class="header">
         <div class="brand">
-            <span>&gt;_</span> CYBERCRYPT
+            <span style="color:var(--neon-green);">&gt;</span> CYBERCRYPT_
         </div>
-        <div id="syncStatus" class="status-tag">● ONLINE</div>
+        <div id="syncStatus" class="status-tag">● QUANTUM_LINKED</div>
     </div>
 
-    <!-- Panel Inisialisasi Terminal ID -->
+    <!-- Panel Login ID -->
     <div class="setup-panel" id="setupArea">
-        <label>[USER_IDENTIFIER]</label>
-        <input type="text" id="myId" placeholder="ID Anda (misal: node_alpha)">
-        
-        <label>[TARGET_IDENTIFIER]</label>
-        <input type="text" id="targetId" placeholder="ID Tujuan (misal: node_beta)">
-        
-        <button class="btn-cyber" onclick="startChat()">[CONNECT_TERMINAL]</button>
+        <div class="input-group">
+            <label>// YOUR_NODE_ID</label>
+            <input type="text" id="myId" placeholder="misal: alpha_node">
+        </div>
+        <div class="input-group">
+            <label>// TARGET_NODE_ID</label>
+            <input type="text" id="targetId" placeholder="misal: beta_node">
+        </div>
+        <button class="btn-cyber" onclick="startChat()">[INITIALIZE_SESSION]</button>
     </div>
 
-    <!-- Box Chat Obrolan -->
+    <!-- Container Chat -->
     <div class="chat-box" id="chatBox"></div>
 
     <!-- Toolbar Input & Media -->
@@ -259,7 +334,7 @@
         <button class="btn-action" id="vnBtn" title="Rekam Suara (VN)" onclick="toggleVN()">🎙️</button>
 
         <input type="text" id="textInput" placeholder="Ketik pesan rahasia..." onkeydown="if(event.key==='Enter') sendText()">
-        <button class="btn-send" onclick="sendText()">KIRIM</button>
+        <button class="btn-send" onclick="sendText()">SEND</button>
     </div>
 </div>
 
@@ -285,7 +360,7 @@
         }
 
         if (RAILWAY_URL.includes("GANTI_DENGAN_DOMAIN")) {
-            alert("Buka file index.html dan ganti variabel RAILWAY_URL di baris 160!");
+            alert("Buka file index.html dan ganti variabel RAILWAY_URL di baris 214!");
             return;
         }
 
@@ -319,16 +394,16 @@
                     div.innerHTML = `<audio src="${cleanUrl}${msg.content}" controls></audio>`;
                 } else if (msg.msg_type === 'location') {
                     const [lat, lon] = msg.content.split(",");
-                    div.innerHTML = `📍 <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="color:#00ff88; text-decoration: underline;">Buka Lokasi GPS</a>`;
+                    div.innerHTML = `📍 <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="color:var(--neon-green); text-decoration: underline;">Buka Lokasi GPS</a>`;
                 }
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
-            document.getElementById("syncStatus").innerText = "● ONLINE";
-            document.getElementById("syncStatus").style.color = "#00ff88";
+            document.getElementById("syncStatus").innerText = "● QUANTUM_LINKED";
+            document.getElementById("syncStatus").style.color = "var(--neon-green)";
         } catch (e) {
-            document.getElementById("syncStatus").innerText = "🔴 SYNC_ERROR";
-            document.getElementById("syncStatus").style.color = "#f85149";
+            document.getElementById("syncStatus").innerText = "🔴 SYNC_FAILED";
+            document.getElementById("syncStatus").style.color = "#ef4444";
         }
     }
 
