@@ -10,7 +10,7 @@
         .app-container { width: 100%; max-width: 450px; background: #172036; border-radius: 12px; height: 95vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #23304d; }
         .header { padding: 14px; background: #0d1527; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #23304d; }
         .setup-panel { padding: 15px; background: #10192d; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; }
-        .setup-panel input { padding: 8px; border-radius: 6px; border: 1px solid #2d3d5f; background: #0d1527; color: #fff; }
+        .setup-panel input { padding: 10px; border-radius: 6px; border: 1px solid #2d3d5f; background: #0d1527; color: #fff; }
         .chat-box { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #0b1329; }
         .msg { padding: 10px; border-radius: 8px; max-width: 80%; font-size: 0.9rem; word-break: break-word; }
         .sent { background: #2563eb; align-self: flex-end; }
@@ -31,29 +31,24 @@
         <span id="syncStatus" style="font-size: 0.8rem; color:#10b981;">● Siap</span>
     </div>
 
-    <div class="setup-panel">
-        <input type="text" id="backendUrl" placeholder="URL Backend Railway (https://...up.railway.app)">
+    <!-- Panel Input ID (Tanpa Input URL) -->
+    <div class="setup-panel" id="setupArea">
         <div style="display: flex; gap: 8px;">
             <input type="text" id="myId" placeholder="ID Anda" style="width: 50%;">
             <input type="text" id="targetId" placeholder="ID Tujuan" style="width: 50%;">
         </div>
-        <button onclick="startChat()" style="padding: 8px; background: #2563eb; color:#fff; border:none; border-radius: 6px; font-weight:bold; cursor:pointer;">Buka Obrolan</button>
+        <button onclick="startChat()" style="padding: 10px; background: #2563eb; color:#fff; border:none; border-radius: 6px; font-weight:bold; cursor:pointer;">Buka Obrolan</button>
     </div>
 
     <div class="chat-box" id="chatBox"></div>
 
-    <!-- Panel Input Chat & Fitur Media -->
     <div class="input-bar" id="inputArea" style="display: none;">
-        <!-- Foto / Kamera / Galeri / Video -->
         <label class="btn-action" title="Kirim Foto/Video">
             📁
             <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" onchange="uploadMedia(this.files[0])">
         </label>
         
-        <!-- Bagikan Lokasi Map -->
         <button class="btn-action" title="Bagikan Lokasi" onclick="shareLocation()">📍</button>
-
-        <!-- Record Voice Note -->
         <button class="btn-action" id="vnBtn" title="Tahan/Klik untuk Rekam VN" onclick="toggleVN()">🎙️</button>
 
         <input type="text" id="textInput" placeholder="Tulis pesan..." onkeydown="if(event.key==='Enter') sendText()">
@@ -62,7 +57,11 @@
 </div>
 
 <script>
-    let SERVER_URL = "";
+    // ====================================================================
+    // ⚠️ MASUKKAN DOMAIN RAILWAY ANDA DI BAWAH INI (PASTIKAN DENGAN https://)
+    const RAILWAY_URL = "https://chat-e2ee-backend-production.up.railway.app";
+    // ====================================================================
+
     let MY_ID = "";
     let TARGET_ID = "";
     let mediaRecorder = null;
@@ -70,24 +69,30 @@
     let isRecording = false;
 
     function startChat() {
-        SERVER_URL = document.getElementById("backendUrl").value.trim().replace(/\/$/, "");
         MY_ID = document.getElementById("myId").value.trim();
         TARGET_ID = document.getElementById("targetId").value.trim();
 
-        if (!SERVER_URL || !MY_ID || !TARGET_ID) {
-            alert("Isi URL Backend, ID Anda, dan ID Tujuan!");
+        if (!MY_ID || !TARGET_ID) {
+            alert("Isi ID Anda dan ID Tujuan!");
             return;
         }
 
+        if (RAILWAY_URL.includes("GANTI_DENGAN_DOMAIN")) {
+            alert("Buka file index.html dan ganti variabel RAILWAY_URL di baris 63!");
+            return;
+        }
+
+        document.getElementById("setupArea").style.display = "none";
         document.getElementById("inputArea").style.display = "flex";
+        
         loadMessages();
-        // Cek riwayat pesan baru setiap 3 detik (Mendukung offline/asinkron)
-        setInterval(loadMessages, 3000);
+        setInterval(loadMessages, 3000); // Polling sync setiap 3 detik
     }
 
     async function loadMessages() {
         try {
-            const res = await fetch(`${SERVER_URL}/messages/${MY_ID}/${TARGET_ID}`);
+            const cleanUrl = RAILWAY_URL.replace(/\/$/, "");
+            const res = await fetch(`${cleanUrl}/messages/${MY_ID}/${TARGET_ID}`);
             const data = await res.json();
             const box = document.getElementById("chatBox");
             box.innerHTML = "";
@@ -100,11 +105,11 @@
                 if (msg.msg_type === 'text') {
                     div.innerText = msg.content;
                 } else if (msg.msg_type === 'image') {
-                    div.innerHTML = `<img src="${SERVER_URL}${msg.content}">`;
+                    div.innerHTML = `<img src="${cleanUrl}${msg.content}">`;
                 } else if (msg.msg_type === 'video') {
-                    div.innerHTML = `<video src="${SERVER_URL}${msg.content}" controls></video>`;
+                    div.innerHTML = `<video src="${cleanUrl}${msg.content}" controls></video>`;
                 } else if (msg.msg_type === 'audio') {
-                    div.innerHTML = `<audio src="${SERVER_URL}${msg.content}" controls></audio>`;
+                    div.innerHTML = `<audio src="${cleanUrl}${msg.content}" controls></audio>`;
                 } else if (msg.msg_type === 'location') {
                     const [lat, lon] = msg.content.split(",");
                     div.innerHTML = `📍 <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="color:#38bdf8;">Buka Lokasi di Map</a>`;
@@ -112,13 +117,17 @@
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
+            document.getElementById("syncStatus").innerText = "● Siap";
+            document.getElementById("syncStatus").style.color = "#10b981";
         } catch (e) {
             document.getElementById("syncStatus").innerText = "🔴 Gagal Sync";
+            document.getElementById("syncStatus").style.color = "#ef4444";
         }
     }
 
     async function sendPayload(type, content) {
-        await fetch(`${SERVER_URL}/messages`, {
+        const cleanUrl = RAILWAY_URL.replace(/\/$/, "");
+        await fetch(`${cleanUrl}/messages`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ sender_id: MY_ID, receiver_id: TARGET_ID, msg_type: type, content: content })
@@ -136,10 +145,11 @@
 
     async function uploadMedia(file) {
         if (!file) return;
+        const cleanUrl = RAILWAY_URL.replace(/\/$/, "");
         const formData = new FormData();
         formData.append("file", file);
 
-        const res = await fetch(`${SERVER_URL}/upload`, { method: "POST", body: formData });
+        const res = await fetch(`${cleanUrl}/upload`, { method: "POST", body: formData });
         const data = await res.json();
         const type = file.type.startsWith("video/") ? "video" : file.type.startsWith("audio/") ? "audio" : "image";
         sendPayload(type, data.url);
@@ -150,7 +160,7 @@
             navigator.geolocation.getCurrentPosition(pos => {
                 const coords = `${pos.coords.latitude},${pos.coords.longitude}`;
                 sendPayload("location", coords);
-            }, () => alert("Gagal mengambil lokasi. Pastikan izin lokasi aktif!"));
+            }, () => alert("Gagal mengambil lokasi. Pastikan izin lokasi diizinkan browser!"));
         }
     }
 
