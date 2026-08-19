@@ -3,63 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberCrypt - Private Chat</title>
+    <title>CyberCrypt - E2EE Terminal Chat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        body { background-color: #0b1329; color: #fff; display: flex; justify-content: center; padding: 10px; }
-        .app-container { width: 100%; max-width: 450px; background: #172036; border-radius: 12px; height: 95vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #23304d; }
-        .header { padding: 14px; background: #0d1527; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #23304d; }
-        .setup-panel { padding: 15px; background: #10192d; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; }
-        .setup-panel input { padding: 10px; border-radius: 6px; border: 1px solid #2d3d5f; background: #0d1527; color: #fff; }
-        .chat-box { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #0b1329; }
-        .msg { padding: 10px; border-radius: 8px; max-width: 80%; font-size: 0.9rem; word-break: break-word; }
-        .sent { background: #2563eb; align-self: flex-end; }
-        .received { background: #23304d; align-self: flex-start; }
-        .msg img, .msg video { max-width: 100%; border-radius: 6px; margin-top: 5px; }
-        .input-bar { padding: 10px; background: #0d1527; display: flex; gap: 6px; align-items: center; border-top: 1px solid #23304d; }
-        .input-bar input[type="text"] { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #2d3d5f; background: #172036; color: #fff; }
-        .btn-action { background: #23304d; border: none; color: #fff; padding: 8px 10px; border-radius: 50%; cursor: pointer; font-size: 1rem; }
-        .btn-send { background: #2563eb; border: none; color: #fff; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        .recording { background: #ef4444 !important; animation: pulse 1s infinite; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #050811;
+            background-image: radial-gradient(circle at 50% 50%, #0d1527 0%, #050811 100%);
+            color: #c9d1d9;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 460px;
+            background: #0d1117;
+            border-radius: 14px;
+            height: 94vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #30363d;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.12), inset 0 0 2px rgba(0, 255, 136, 0.2);
+        }
+        .header {
+            padding: 14px 18px;
+            background: #161b22;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+            font-family: 'Fira Code', monospace;
+        }
+        .brand {
+            color: #00ff88;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-tag {
+            font-size: 0.75rem;
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            font-weight: 600;
+        }
+        .setup-panel {
+            padding: 20px;
+            background: #161b22;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-family: 'Fira Code', monospace;
+        }
+        .setup-panel label {
+            font-size: 0.75rem;
+            color: #8b949e;
+            margin-bottom: -6px;
+        }
+        .setup-panel input {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            color: #00ff88;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.2s;
+        }
+        .setup-panel input:focus {
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+        }
+        .btn-cyber {
+            padding: 12px;
+            background: linear-gradient(135deg, #00b359, #00ff88);
+            color: #050811;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 6px;
+        }
+        .btn-cyber:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+            transform: translateY(-1px);
+        }
+        .chat-box {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #090d13;
+        }
+        .chat-box::-webkit-scrollbar { width: 6px; }
+        .chat-box::-webkit-scrollbar-track { background: #090d13; }
+        .chat-box::-webkit-scrollbar-thumb { background: #21262d; border-radius: 3px; }
+        .chat-box::-webkit-scrollbar-thumb:hover { background: #00ff88; }
+
+        .msg {
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 82%;
+            font-size: 0.92rem;
+            line-height: 1.45;
+            word-break: break-word;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .sent {
+            background: #0d281e;
+            border: 1px solid #00ff88;
+            color: #e6fffa;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .received {
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #f0f6fc;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+        .msg img, .msg video {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .input-bar {
+            padding: 12px;
+            background: #161b22;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border-top: 1px solid #30363d;
+        }
+        .input-bar input[type="text"] {
+            flex: 1;
+            padding: 11px 16px;
+            border-radius: 24px;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            color: #f0f6fc;
+            font-size: 0.92rem;
+            outline: none;
+            transition: 0.2s;
+        }
+        .input-bar input[type="text"]:focus {
+            border-color: #00ff88;
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+        }
+        .btn-action {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #00ff88;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .btn-action:hover {
+            background: #30363d;
+            border-color: #00ff88;
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+        }
+        .btn-send {
+            background: #00ff88;
+            color: #050811;
+            border: none;
+            padding: 0 16px;
+            height: 38px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+            transition: 0.2s;
+        }
+        .btn-send:hover {
+            box-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+        }
+        .recording {
+            background: #da3633 !important;
+            color: #fff !important;
+            border-color: #f85149 !important;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(248, 81, 73, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0); }
+        }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="header">
-        <strong style="color:#38bdf8;">🔒 CyberCrypt Chat</strong>
-        <span id="syncStatus" style="font-size: 0.8rem; color:#10b981;">● Siap</span>
-    </div>
-
-    <!-- Panel Input ID (Tanpa Input URL) -->
-    <div class="setup-panel" id="setupArea">
-        <div style="display: flex; gap: 8px;">
-            <input type="text" id="myId" placeholder="ID Anda" style="width: 50%;">
-            <input type="text" id="targetId" placeholder="ID Tujuan" style="width: 50%;">
+        <div class="brand">
+            <span>&gt;_</span> CYBERCRYPT
         </div>
-        <button onclick="startChat()" style="padding: 10px; background: #2563eb; color:#fff; border:none; border-radius: 6px; font-weight:bold; cursor:pointer;">Buka Obrolan</button>
+        <div id="syncStatus" class="status-tag">● ONLINE</div>
     </div>
 
+    <!-- Panel Inisialisasi Terminal ID -->
+    <div class="setup-panel" id="setupArea">
+        <label>[USER_IDENTIFIER]</label>
+        <input type="text" id="myId" placeholder="ID Anda (misal: node_alpha)">
+        
+        <label>[TARGET_IDENTIFIER]</label>
+        <input type="text" id="targetId" placeholder="ID Tujuan (misal: node_beta)">
+        
+        <button class="btn-cyber" onclick="startChat()">[CONNECT_TERMINAL]</button>
+    </div>
+
+    <!-- Box Chat Obrolan -->
     <div class="chat-box" id="chatBox"></div>
 
+    <!-- Toolbar Input & Media -->
     <div class="input-bar" id="inputArea" style="display: none;">
-        <label class="btn-action" title="Kirim Foto/Video">
+        <label class="btn-action" title="Buka Kamera">
+            📸
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="uploadMedia(this.files[0])">
+        </label>
+
+        <label class="btn-action" title="Upload Galeri">
             📁
             <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" onchange="uploadMedia(this.files[0])">
         </label>
         
-        <button class="btn-action" title="Bagikan Lokasi" onclick="shareLocation()">📍</button>
-        <button class="btn-action" id="vnBtn" title="Tahan/Klik untuk Rekam VN" onclick="toggleVN()">🎙️</button>
+        <button class="btn-action" title="Kirim Lokasi" onclick="shareLocation()">📍</button>
+        <button class="btn-action" id="vnBtn" title="Rekam Suara (VN)" onclick="toggleVN()">🎙️</button>
 
-        <input type="text" id="textInput" placeholder="Tulis pesan..." onkeydown="if(event.key==='Enter') sendText()">
-        <button class="btn-send" onclick="sendText()">Kirim</button>
+        <input type="text" id="textInput" placeholder="Ketik pesan rahasia..." onkeydown="if(event.key==='Enter') sendText()">
+        <button class="btn-send" onclick="sendText()">KIRIM</button>
     </div>
 </div>
 
 <script>
     // ====================================================================
-    // ⚠️ MASUKKAN DOMAIN RAILWAY ANDA DI BAWAH INI (PASTIKAN DENGAN https://)
-    const RAILWAY_URL = "https://chat-e2ee-backend-production.up.railway.app";
+    // ⚠️ PASTIKAN DOMAIN RAILWAY ANDA TERTANAM DI SINI (DENGAN https://)
+    const RAILWAY_URL = "https://GANTI_DENGAN_DOMAIN_RAILWAY_ANDA.up.railway.app";
     // ====================================================================
 
     let MY_ID = "";
@@ -78,7 +285,7 @@
         }
 
         if (RAILWAY_URL.includes("GANTI_DENGAN_DOMAIN")) {
-            alert("Buka file index.html dan ganti variabel RAILWAY_URL di baris 63!");
+            alert("Buka file index.html dan ganti variabel RAILWAY_URL di baris 160!");
             return;
         }
 
@@ -86,7 +293,7 @@
         document.getElementById("inputArea").style.display = "flex";
         
         loadMessages();
-        setInterval(loadMessages, 3000); // Polling sync setiap 3 detik
+        setInterval(loadMessages, 3000);
     }
 
     async function loadMessages() {
@@ -112,16 +319,16 @@
                     div.innerHTML = `<audio src="${cleanUrl}${msg.content}" controls></audio>`;
                 } else if (msg.msg_type === 'location') {
                     const [lat, lon] = msg.content.split(",");
-                    div.innerHTML = `📍 <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="color:#38bdf8;">Buka Lokasi di Map</a>`;
+                    div.innerHTML = `📍 <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="color:#00ff88; text-decoration: underline;">Buka Lokasi GPS</a>`;
                 }
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
-            document.getElementById("syncStatus").innerText = "● Siap";
-            document.getElementById("syncStatus").style.color = "#10b981";
+            document.getElementById("syncStatus").innerText = "● ONLINE";
+            document.getElementById("syncStatus").style.color = "#00ff88";
         } catch (e) {
-            document.getElementById("syncStatus").innerText = "🔴 Gagal Sync";
-            document.getElementById("syncStatus").style.color = "#ef4444";
+            document.getElementById("syncStatus").innerText = "🔴 SYNC_ERROR";
+            document.getElementById("syncStatus").style.color = "#f85149";
         }
     }
 
@@ -160,7 +367,7 @@
             navigator.geolocation.getCurrentPosition(pos => {
                 const coords = `${pos.coords.latitude},${pos.coords.longitude}`;
                 sendPayload("location", coords);
-            }, () => alert("Gagal mengambil lokasi. Pastikan izin lokasi diizinkan browser!"));
+            }, () => alert("Gagal mengambil lokasi. Pastikan izin lokasi aktif!"));
         }
     }
 
