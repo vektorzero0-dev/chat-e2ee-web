@@ -40,16 +40,39 @@
   <button onclick="sendMediaFile()" style="background:#028284;">Kirim Media (E2EE)</button>
   
   <button id="btn-vn" onclick="toggleRecording()" style="background:#d97706; margin-top:8px;">🎙️ Rekam & Kirim VN</button>
+  <button onclick="clearHistory()" style="background:#53bdeb; color:#111b21; margin-top:8px;">🗑️ Hapus Riwayat Chat Local</button>
 </div>
 
 <script>
-  // KONEKSI & CONFIGURASI OTOMATIS
-  const RENDER_WS_URL = "wss://e2ee-backend.onrender.com/ws/"; // Ganti URL ini jika nama service Render Anda berbeda
+  // KONEKSI & CONFIGURASI OTOMATIS (Sudah Diperbaiki)
+  const RENDER_WS_URL = "wss://chat-e2ee-backend.onrender.com/ws/"; 
   const CLOUD_NAME = "ktbbdjrb"; 
   const UPLOAD_PRESET = "chat_preset"; 
 
   let ws, keyPair, peerPublicKey;
   let mediaRecorder, audioChunks = [];
+
+  // Muat riwayat chat tersimpan saat web pertama kali dibuka
+  window.onload = () => {
+    const savedChat = localStorage.getItem("e2ee_chat_history");
+    if (savedChat) {
+      document.getElementById("chat-box").innerHTML = savedChat;
+      const box = document.getElementById("chat-box");
+      box.scrollTop = box.scrollHeight;
+    }
+  };
+
+  function saveChatToLocal() {
+    const boxHtml = document.getElementById("chat-box").innerHTML;
+    localStorage.setItem("e2ee_chat_history", boxHtml);
+  }
+
+  function clearHistory() {
+    if(confirm("Hapus seluruh riwayat chat di browser ini?")) {
+      localStorage.removeItem("e2ee_chat_history");
+      document.getElementById("chat-box").innerHTML = "";
+    }
+  }
 
   // 1. Setup RSA Key Pair
   async function initKeys() {
@@ -81,16 +104,22 @@
 
   // 2. Koneksi WebSocket
   async function connectWS() {
-    const myId = document.getElementById("my-id").value;
-    const targetId = document.getElementById("target-id").value;
+    const myId = document.getElementById("my-id").value.trim();
+    const targetId = document.getElementById("target-id").value.trim();
     if(!myId || !targetId) return alert("Isi ID Anda dan ID Lawan!");
 
+    document.getElementById("status").innerText = "Menghubungkan ke server Render...";
     ws = new WebSocket(RENDER_WS_URL + myId);
 
     ws.onopen = async () => {
       document.getElementById("status").innerText = "Terhubung! Menukar Kunci...";
       const pubKeyStr = await exportPublicKey();
       ws.send(JSON.stringify({ type: "key_exchange", from: myId, to: targetId, key: pubKeyStr }));
+    };
+
+    ws.onerror = (error) => {
+      document.getElementById("status").innerText = "Gagal terhubung ke server!";
+      alert("Gagal terhubung ke WebSocket Render. Pastikan server Render sudah 'Live'.");
     };
 
     ws.onmessage = async (event) => {
@@ -104,6 +133,7 @@
       } 
       else if(data.type === "key_ack") {
         peerPublicKey = await importPublicKey(data.key);
+        document.getElementById("status").innerText = "Koneksi E2EE Aman! Selamat Chatting.";
         logSystem("Koneksi E2EE Aman! Selamat Chatting.");
       }
       else if(data.type === "chat_text") {
@@ -119,10 +149,10 @@
   // 3. Kirim Pesan Teks
   async function sendTextMessage() {
     const text = document.getElementById("message-input").value;
-    const targetId = document.getElementById("target-id").value;
-    const myId = document.getElementById("my-id").value;
+    const targetId = document.getElementById("target-id").value.trim();
+    const myId = document.getElementById("my-id").value.trim();
 
-    if(!peerPublicKey) return alert("Kunci lawan belum terhubung!");
+    if(!peerPublicKey) return alert("Kunci lawan belum terhubung! Pastikan kedua pihak mengeklik Hubungkan Chat.");
 
     const enc = new TextEncoder();
     const encrypted = await window.crypto.subtle.encrypt({ name: "RSA-OAEP" }, peerPublicKey, enc.encode(text));
@@ -133,7 +163,7 @@
     document.getElementById("message-input").value = "";
   }
 
-  // 4. Kirim & Enkripsi Media (Foto/Video)
+  // 4. Kirim & Enkripsi Media
   async function sendMediaFile() {
     const fileInput = document.getElementById("media-file");
     if(fileInput.files.length === 0) return alert("Pilih file dulu!");
@@ -189,8 +219,8 @@
     const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData });
     const cloudData = await res.json();
 
-    const targetId = document.getElementById("target-id").value;
-    const myId = document.getElementById("my-id").value;
+    const targetId = document.getElementById("target-id").value.trim();
+    const myId = document.getElementById("my-id").value.trim();
 
     ws.send(JSON.stringify({
       type: "chat_media",
@@ -234,6 +264,7 @@
     const box = document.getElementById("chat-box");
     box.innerHTML += `<div class="msg ${type}"><b>${sender}:</b> ${text}</div>`;
     box.scrollTop = box.scrollHeight;
+    saveChatToLocal();
   }
 
   function renderMediaElement(sender, blobUrl, mimeType, type) {
@@ -250,11 +281,13 @@
 
     box.innerHTML += `<div class="msg ${type}"><b>${sender}:</b><br>${mediaHtml}</div>`;
     box.scrollTop = box.scrollHeight;
+    saveChatToLocal();
   }
 
   function logSystem(text) {
     const box = document.getElementById("chat-box");
     box.innerHTML += `<div class="system">⚙️ ${text}</div>`;
+    saveChatToLocal();
   }
 </script>
 
